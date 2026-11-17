@@ -5,14 +5,12 @@ package identitycontroller
 
 import (
 	"context"
-	"dsx-identity/internal/dsxidentity"
-	"dsx-identity/internal/spireidentity"
 	"errors"
-	"github.com/spiffe/go-spiffe/v2/spiffeid"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/spiffe/go-spiffe/v2/spiffeid"
 	spirev1alpha1 "github.com/spiffe/spire-controller-manager/api/v1alpha1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -25,6 +23,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/client/interceptor"
+
+	"dsx-identity/internal/dsxidentity"
+	"dsx-identity/internal/spireidentity"
 )
 
 var testDPUMetadataSelectors = []string{
