@@ -203,9 +203,9 @@ flowchart TB
 
     subgraph HostLane["Standalone tenant-facing bare-metal host"]
       direction TB
-      HostSource{{"INPUT CR<br/>kind: BareMetalInstance<br/>tenant: org-id annotation<br/>BM id: spec.instance_id<br/>DPU id and serial: status.primary_dpu"}}
+      HostSource{{"INPUT CR<br/>kind: BareMetalInstance<br/>tenant: org-id annotation<br/>BM id: spec.instance_id<br/>optional role: role annotation<br/>DPU id and serial: status.primary_dpu"}}
       HostParent(["PARENT AGENT ID<br/>type: dpu_hw<br/>spiffe://{td}/spire/agent/dpu_hw/{normalized DPU serial}"])
-      HostEntry["STATIC ENTRY<br/>kind: ClusterStaticEntry<br/>owner: NVIDIA Workload Identity Controller<br/>subject: /tenant/{org-id}/service/{service}/bm/{spec.instance_id}<br/>hint: dsx-imds<br/>selectors: DPU IMDS Kubernetes selectors"]
+      HostEntry["STATIC ENTRY<br/>kind: ClusterStaticEntry<br/>owner: NVIDIA Workload Identity Controller<br/>subject: /tenant/{org-id}/service/{service}/bm/{spec.instance_id}[/role/{role}]<br/>hint: dsx-imds<br/>selectors: DPU IMDS Kubernetes selectors"]
       HostSource -->|"derives subject"| HostEntry
       HostParent -->|"status.primary_dpu.serial_number"| HostEntry
     end
@@ -229,7 +229,7 @@ flowchart TB
       direction TB
       VMSource{{"INPUT CR<br/>kind: VirtualInstance<br/>tenant: org-id annotation<br/>VM id: spec.instance_id<br/>host: spec.node_name<br/>holder: status.pod_uid"}}
       VMParent(["PARENT AGENT ID<br/>type: dsx_imds<br/>spiffe://{td}/spire/agent/dsx_imds/tenant/{operator}/bm/{spec.node_name}"])
-      VMEntry["STATIC ENTRY<br/>kind: ClusterStaticEntry<br/>owner: NVIDIA Workload Identity Controller<br/>subject: /tenant/{org-id}/service/{service}/vm/{spec.instance_id}<br/>hint: dsx-imds-vm<br/>selector: Pod UID"]
+      VMEntry["STATIC ENTRY<br/>kind: ClusterStaticEntry<br/>owner: NVIDIA Workload Identity Controller<br/>subject: /tenant/{org-id}/service/{service}/vm/{spec.instance_id}[/role/{role}]<br/>hint: dsx-imds-vm<br/>selector: Pod UID"]
       VMSource -->|"derives subject"| VMEntry
       VMParent -->|"spec.node_name"| VMEntry
     end

@@ -24,7 +24,23 @@ import (
 	"dsx-identity/internal/spireidentity"
 )
 
-const OrgIDAnnotation = "launchlayer.nvidia.com/org-id"
+const (
+	OrgIDAnnotation = "launchlayer.nvidia.com/org-id"
+	RoleAnnotation  = "launchlayer.nvidia.com/role"
+)
+
+var rolePattern = regexp.MustCompile(`^[a-z0-9][a-z0-9_-]{0,62}$`)
+
+func launchLayerRolePath(source *unstructured.Unstructured) ([]string, error) {
+	role := source.GetAnnotations()[RoleAnnotation]
+	if role == "" {
+		return nil, nil
+	}
+	if !rolePattern.MatchString(role) {
+		return nil, fmt.Errorf("invalid workload role %q", role)
+	}
+	return []string{"role", role}, nil
+}
 
 var podUIDPattern = regexp.MustCompile(`^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$`)
 
@@ -99,6 +115,10 @@ func (r *LaunchLayerReconciler) virtualInstanceEntry(source *unstructured.Unstru
 		return nil, fmt.Errorf("VirtualInstance status.pod_uid %q is not a canonical UUID", instance.Status.PodUID)
 	}
 
+	rolePath, err := launchLayerRolePath(source)
+	if err != nil {
+		return nil, err
+	}
 	td, err := r.Config.trustDomain()
 	if err != nil {
 		return nil, err
@@ -111,6 +131,7 @@ func (r *LaunchLayerReconciler) virtualInstanceEntry(source *unstructured.Unstru
 		Service:      r.Config.Service,
 		ResourceType: identity.ResourceVM,
 		ResourceID:   instance.Spec.InstanceID,
+		Path:         rolePath,
 	}, td)
 	if err != nil {
 		return nil, err
@@ -157,6 +178,10 @@ func (r *LaunchLayerReconciler) bareMetalInstanceEntry(source *unstructured.Unst
 		return nil, fmt.Errorf("BareMetalInstance status.primary_dpu.serial_number: %w", err)
 	}
 
+	rolePath, err := launchLayerRolePath(source)
+	if err != nil {
+		return nil, err
+	}
 	td, err := r.Config.trustDomain()
 	if err != nil {
 		return nil, err
@@ -169,6 +194,7 @@ func (r *LaunchLayerReconciler) bareMetalInstanceEntry(source *unstructured.Unst
 		Service:      r.Config.Service,
 		ResourceType: identity.ResourceBM,
 		ResourceID:   instance.Spec.InstanceID,
+		Path:         rolePath,
 	}, td)
 	if err != nil {
 		return nil, err

@@ -80,12 +80,31 @@ kind: VirtualInstance
 metadata:
   annotations:
     launchlayer.nvidia.com/org-id: tenant-2
+    launchlayer.nvidia.com/role: trainer  # optional
 spec:
   instance_id: vm-1234
   node_name: host-1234
 status:
   pod_uid: <virt-launcher-pod-uid>
 ```
+
+Both Launch Layer resource kinds accept the optional
+`launchlayer.nvidia.com/role` annotation. A nonempty role appends `/role/<role>`
+to the subject. Roles contain 1-63 lowercase letters, digits, underscores or
+hyphens and start with a letter or digit. Values are preserved exactly.
+An absent or empty role omits the suffix. Invalid roles remove the derived
+registration entry until the source is corrected.
+
+For the VM above, the local and exchanged subjects are:
+
+```text
+spiffe://<local-domain>/tenant/tenant-2/service/dsx/vm/vm-1234/role/trainer
+spiffe://tenant-2.<region>.dsx.<partition>/vm/vm-1234/role/trainer
+```
+
+The exchanged `dsx.nvidia.com/resource` claim includes
+`{"resource_type":"role","resource_id":"trainer"}` as its final pair.
+Relying parties evaluate the tenant and role together.
 
 `BareMetalInstance` uses the same tenant annotation, `spec.instance_id`, and
 `status.primary_dpu.machine_id` plus `status.primary_dpu.serial_number`. The

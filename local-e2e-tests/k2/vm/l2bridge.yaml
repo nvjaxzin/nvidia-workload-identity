@@ -10,6 +10,7 @@ metadata:
   name: e2e-debian-vm-l2bridge
   annotations:
     launchlayer.nvidia.com/org-id: tenant-2
+    launchlayer.nvidia.com/role: trainer
 spec:
   instance_id: e2e-debian-vm-l2bridge
   node_name: k2-worker

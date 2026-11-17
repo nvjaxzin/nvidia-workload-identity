@@ -130,8 +130,8 @@ func normalizeDPUSerial(raw string) (string, error) {
 }
 
 func (r *DPUReconciler) hasTenantBareMetalInstance(ctx context.Context, dpuMachineID string) (bool, error) {
-	// A valid LaunchLayer BM identity replaces the operator fallback for the same
-	// machine, preventing two tenants from owning one resource.
+	// A complete tenant assignment suppresses the operator fallback even when
+	// its optional workload role is invalid.
 	instances := &unstructured.UnstructuredList{}
 	instances.SetGroupVersionKind(BareMetalInstanceGVK.GroupVersion().WithKind(BareMetalInstanceGVK.Kind + "List"))
 	if err := r.List(ctx, instances); err != nil {
@@ -156,7 +156,12 @@ func (r *DPUReconciler) hasTenantBareMetalInstance(ctx context.Context, dpuMachi
 			return false, fmt.Errorf("BareMetalInstance status.primary_dpu.machine_id: %w", err)
 		}
 		if found && machineID == dpuMachineID {
-			if _, err := (&LaunchLayerReconciler{Config: r.Config}).bareMetalInstanceEntry(instance); err == nil {
+			// Role validity controls workload registration, not hardware assignment.
+			assignment := instance.DeepCopy()
+			annotations := assignment.GetAnnotations()
+			delete(annotations, RoleAnnotation)
+			assignment.SetAnnotations(annotations)
+			if _, err := (&LaunchLayerReconciler{Config: r.Config}).bareMetalInstanceEntry(assignment); err == nil {
 				return true, nil
 			}
 		}

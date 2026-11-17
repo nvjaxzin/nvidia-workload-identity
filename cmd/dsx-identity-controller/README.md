@@ -13,7 +13,10 @@ sources, and reconciles again when the source or conflicting entry changes.
 Every DPU source identifies its paired operator-owned BM through the
 `carbide.nvidia.com/dpu-machine-id` label. A complete tenant
 `BareMetalInstance` for that DPU replaces the operator fallback entry. The
-`launchlayer.nvidia.com/org-id` annotation supplies the tenant.
+`launchlayer.nvidia.com/org-id` annotation supplies the tenant. Both BM and VM
+sources may supply `launchlayer.nvidia.com/role` to append `/role/<role>` to
+their subjects. See the [identity contract](../../docs/identity-contract.md)
+for role validation and exchange behavior.
 
 A `VirtualInstance` supplies the VM instance ID, worker node name, and current
 virt-launcher Pod UID. Its identity is parented to the operator-owned worker's

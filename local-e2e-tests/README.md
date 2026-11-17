@@ -220,6 +220,10 @@ make test
 make clean
 ```
 
+The bridge VM requests an identity without a role. The l2bridge VM supplies
+`launchlayer.nvidia.com/role: trainer`. Both paths verify the signed subject and
+resource claims through IMDS and the OpenBao relying party.
+
 The E2E suite verifies operator-host IMDS through both `dsx_imds` plugin halves,
 DPU file delivery, Pod and VM identity delivery through both bindings, shard isolation, NATS KV
 propagation, aggregate JWKS behavior, OpenBao authorization, restart recovery,

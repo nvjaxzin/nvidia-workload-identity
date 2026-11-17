@@ -105,7 +105,14 @@ check_token_contract() {
     local token="$1"
     local expected_subject="${2:-${EXPECTED_SPIFFE_ID}}"
     local expected_audience="${3:-${TEST_AUDIENCE}}"
-    local expected_claims="${4:-$(resource_claims tenant-2 dsx vm "${expected_subject##*/}")}"
+    local expected_claims="${4:-}"
+    if [[ -z "${expected_claims}" ]]; then
+        local resource_subject="${expected_subject%/role/*}"
+        expected_claims=$(resource_claims tenant-2 dsx vm "${resource_subject##*/}")
+        if [[ "${expected_subject}" == */role/* ]]; then
+            expected_claims=$(jq -c --arg role "${expected_subject##*/}"                 '."dsx.nvidia.com/resource" += [{resource_type: "role", resource_id: $role}]' <<<"${expected_claims}")
+        fi
+    fi
     local encoded padding header payload now
 
     encoded=$(cut -d. -f1 <<<"${token}")
@@ -405,6 +412,9 @@ verify_vm_identities() {
             --namespace "${NAMESPACE}" --context "${CONTEXT}" --timeout=300s >/dev/null || return 1
         for VM_NAME in "${VM_NAMES[@]}"; do
             EXPECTED_SPIFFE_ID="spiffe://tenant-2.ds9.dsx.nvid.id/vm/${VM_NAME}${identity_suffix}"
+            if [[ "${VM_NAME}" == e2e-debian-vm-l2bridge ]]; then
+                EXPECTED_SPIFFE_ID+="/role/trainer"
+            fi
             if ! run_timed "${VM_TENANT} ${VM_NAME} identity and OpenBao" verify_metadata_access; then
                 failed=$((failed + 1))
                 kubectl logs --context "${CONTEXT}" -n "${NAMESPACE}" \
